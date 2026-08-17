@@ -7,6 +7,8 @@ from app.indexed_chunk import IndexedChunk
 from app.parsers import parse_file
 from qdrant_client.models import PointStruct
 
+from app.vector_store import VectorStore
+
 
 def index_file(
         file: FileInfo,
@@ -44,7 +46,10 @@ def create_points(
 
     for chunk in indexed_chunks:
         point = PointStruct(
-            id=str(uuid.uuid4()),
+            id=str(uuid.uuid5(
+                uuid.NAMESPACE_URL,
+                f"{chunk.file_path}:{chunk.chunk_index}",
+            )),
             vector=chunk.embedding,
             payload={
                 "file_path": str(chunk.file_path),
@@ -57,6 +62,27 @@ def create_points(
         points.append(point)
 
     return points
+
+def reindex_file(
+        file: FileInfo,
+        embedding_service: EmbeddingService,
+        vector_store: VectorStore
+) -> None:
+    vector_store.delete_by_file_path(
+        str(file.path)
+    )
+
+    indexed_chunks = index_file(
+        file,
+        embedding_service,
+    )
+
+    if not indexed_chunks:
+        return
+
+    points = create_points(indexed_chunks)
+
+    vector_store.add_points(points)
 
 
 

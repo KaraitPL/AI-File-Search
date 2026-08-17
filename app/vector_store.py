@@ -1,5 +1,7 @@
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, PointStruct
+from qdrant_client.models import Distance, VectorParams, PointStruct, Filter, FieldCondition, MatchValue
+from pathlib import Path
+import shutil
 
 class VectorStore:
     COLLECTION_NAME = "file_chunks"
@@ -9,7 +11,10 @@ class VectorStore:
             path: str,
             vector_size: int,
     ):
-        self.client = QdrantClient(path=path)
+        self.path = Path(path)
+        self.client = QdrantClient(
+            path=str(self.path)
+        )
 
         if not self.client.collection_exists(
             self.COLLECTION_NAME
@@ -34,3 +39,39 @@ class VectorStore:
     def close(self) -> None:
         self.client.close()
 
+    def reset(self) -> None:
+        self.close()
+
+        if self.path.exists():
+            shutil.rmtree(self.path)
+
+    def search(
+        self,
+        vector: list[float],
+        limit: int = 5,
+    ):
+        result = self.client.query_points(
+            collection_name=self.COLLECTION_NAME,
+            query=vector,
+            limit=limit,
+        )
+
+        return result.points
+
+    def delete_by_file_path(
+            self,
+            file_path: str,
+    ) -> None:
+        self.client.delete(
+            collection_name=self.COLLECTION_NAME,
+            points_selector=Filter(
+                must=[
+                    FieldCondition(
+                        key="file_path",
+                        match=MatchValue(
+                            value=file_path,
+                        ),
+                    )
+                ]
+            ),
+        )
