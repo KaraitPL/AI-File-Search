@@ -9,13 +9,17 @@ class VectorStore:
     def __init__(
             self,
             path: str,
-            vector_size: int,
     ):
         self.path = Path(path)
         self.client = QdrantClient(
             path=str(self.path)
         )
 
+
+    def ensure_collection(
+        self,
+        vector_size: int,
+    ) -> None:
         if not self.client.collection_exists(
             self.COLLECTION_NAME
         ):
@@ -26,6 +30,7 @@ class VectorStore:
                     distance=Distance.COSINE,
                 ),
             )
+
 
     def add_points(
             self,

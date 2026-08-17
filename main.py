@@ -12,10 +12,12 @@ def run_index(directory: Path) -> None:
 
     vector_store = VectorStore(
         path=DB_PATH,
-        vector_size=embedding_service.dimension,
     )
 
     try:
+        vector_store.ensure_collection(
+            vector_size=embedding_service.dimension,
+        )
         files = scan_directory(directory)
 
         if not files:
@@ -45,7 +47,6 @@ def run_search(query: str) -> None:
 
     vector_store = VectorStore(
         path=DB_PATH,
-        vector_size=embedding_service.dimension,
     )
 
     try:
@@ -67,10 +68,8 @@ def run_search(query: str) -> None:
         vector_store.close()
 
 def run_reset() -> None:
-    embedding_service = EmbeddingService()
     vector_store = VectorStore(
         path=DB_PATH,
-        vector_size=embedding_service.dimension,
     )
     try:
         vector_store.reset()
