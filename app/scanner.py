@@ -1,6 +1,8 @@
 from pathlib import Path
 from dataclasses import dataclass
 
+SUPPORTED_EXTENSIONS = {".txt", ".md", ".pdf"}
+
 @dataclass
 class FileInfo:
     path: Path
@@ -13,17 +15,22 @@ def scan_directory(directory: Path) -> list[FileInfo]:
     files: list[FileInfo] = []
 
     for path in directory.rglob("*"):
-        if path.is_file():
-            stat = path.stat()
+        if not path.is_file():
+            continue
 
-            files.append(
-                FileInfo(
-                    path=path,
-                    name=path.name,
-                    extension=path.suffix.lower(),
-                    size=stat.st_size,
-                    modified_at=stat.st_mtime,
-                )
+        if path.suffix.lower() not in SUPPORTED_EXTENSIONS:
+            continue
+
+        stat = path.stat()
+
+        files.append(
+            FileInfo(
+                path=path,
+                name=path.name,
+                extension=path.suffix.lower(),
+                size=stat.st_size,
+                modified_at=stat.st_mtime,
             )
+        )
 
     return files
