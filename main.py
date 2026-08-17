@@ -1,5 +1,5 @@
 from pathlib import Path
-from app.indexer import index_file
+from app.indexer import index_file, file_needs_reindex, reindex_file
 import shutil
 
 from app.scanner import scan_directory
@@ -23,22 +23,26 @@ vector_store = VectorStore(
 
 
 
+
 print("Qdrant ready")
 
 files = scan_directory(directory)
 
 for file in files[:3]:
-    indexed_chunks = index_file(
+    if not file_needs_reindex(
         file,
-        embedding_service,
-    )
-
-    if not indexed_chunks:
+        vector_store,
+    ):
+        print(f"Skipping: {file.name}")
         continue
 
-    points = create_points(indexed_chunks)
+    print(f"Reindexing: {file.name}")
 
-    vector_store.add_points(points)
+    reindex_file(
+        file,
+        embedding_service,
+        vector_store
+    )
 
 
 

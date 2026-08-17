@@ -34,6 +34,8 @@ def index_file(
                 chunk_index=index,
                 text=chunk,
                 embedding=embedding,
+                modified_at=file.modified_at,
+                size=file.size,
             )
         )
 
@@ -56,6 +58,8 @@ def create_points(
                 "file_name": chunk.file_name,
                 "chunk_index": chunk.chunk_index,
                 "text": chunk.text,
+                "modified_at": chunk.modified_at,
+                "size": chunk.size,
             },
         )
 
@@ -83,6 +87,28 @@ def reindex_file(
     points = create_points(indexed_chunks)
 
     vector_store.add_points(points)
+
+
+
+def file_needs_reindex(
+        file: FileInfo,
+        vector_store: VectorStore,
+) -> bool:
+    metadata = vector_store.get_file_metadata(
+        str(file.path)
+    )
+
+    if metadata is None:
+        return True
+
+    if metadata["modified_at"] != file.modified_at:
+        return True
+
+    if metadata["size"] != file.size:
+        return True
+
+    return False
+
 
 
 

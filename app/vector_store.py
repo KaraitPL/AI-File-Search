@@ -75,3 +75,30 @@ class VectorStore:
                 ]
             ),
         )
+
+    def get_file_metadata(
+            self,
+            file_path: str,
+    ):
+        points, _ = self.client.scroll(
+            collection_name=self.COLLECTION_NAME,
+            scroll_filter=Filter(
+                must=[
+                    FieldCondition(
+                        key="file_path",
+                        match=MatchValue(
+                            value=file_path,
+                        ),
+                    )
+                ]
+            ),
+            limit=1,
+            with_payload=True,
+            with_vectors=False,
+        )
+
+        if not points:
+            return None
+
+        return points[0].payload
+

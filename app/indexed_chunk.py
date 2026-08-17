@@ -8,3 +8,5 @@ class IndexedChunk:
     chunk_index: int
     text: str
     embedding: list[float]
+    modified_at: float
+    size: int
