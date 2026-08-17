@@ -6,6 +6,11 @@ class EmbeddingService:
             "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
         )
 
+    @property
+    def dimension(self) -> int:
+        return self.model.get_embedding_dimension()
+
+
     def embed_query(self, text: str) -> list[float]:
         vector = self.model.encode(
             text,

@@ -2,16 +2,24 @@ from pathlib import Path
 from app.indexer import index_file
 
 from app.scanner import scan_directory
-from app.parsers import parse_file
-from app.chunking import chunk_text
+from app.search import search
 from app.embeddings import EmbeddingService
-from app.math_functions import cosine_similarity
+from app.vector_store import VectorStore
+from app.indexer import create_points
 
-directory = Path.home() / "AI-File-Search"
 
-files = scan_directory(directory)
+directory = Path.home() / "Folder_Testowy"
 
 embedding_service = EmbeddingService()
+
+vector_store = VectorStore(
+    path="./data/qdrant",
+    vector_size=embedding_service.dimension,
+)
+
+print("Qdrant ready")
+
+files = scan_directory(directory)
 
 for file in files[:3]:
     indexed_chunks = index_file(
@@ -19,15 +27,39 @@ for file in files[:3]:
         embedding_service,
     )
 
-    print("=" * 80)
-    print(file.name)
-    print("Chunks: ", len(indexed_chunks))
+    if not indexed_chunks:
+        continue
 
-    for chunk in indexed_chunks[:2]:
-        print()
-        print("Chunk index: ", chunk.chunk_index)
-        print("Text: ", chunk.text[:200])
-        print("Embedding size: ", len(chunk.embedding))
+    points = create_points(indexed_chunks)
+
+    vector_store.add_points(points)
+
+    print(
+        f"Indexed {file.name}: "
+        f"{len(points)} chunks"
+    )
+
+
+# print(f"Indexed chunks: {len(indexed_chunks)}")
+
+# query = input("Search: ")
+#
+# results = search(
+#     query=query,
+#     indexed_chunks=indexed_chunks,
+#     embedding_service=embedding_service,
+#     limit=5,
+# )
+#
+# for result in results:
+#     print()
+#     print(f"Score: {result.score:.3f}")
+#     print(f"File: {result.chunk.file_name}")
+#     print(f"Path: {result.chunk.file_path}")
+#     print(f"Chunk: {result.chunk.chunk_index}")
+#     print(f"Text: {result.chunk.text[:300]}")
+
+vector_store.close()
 
 
 
